@@ -42,6 +42,7 @@ export async function getOrCreateUser() {
       friends: {},
       tasks: {},
       score: 0,
+      backgroundPurchased: false, // Добавляем статус фона
     };
 
     const { data: insertedUser, error: insertError } = await supabase
@@ -146,5 +147,44 @@ export async function completeTask(task) {
     }
   } catch (error) {
     console.error('Неизвестная ошибка при завершении задачи:', error);
+  }
+}
+
+// Обновить статус покупки фона
+export async function updateBackgroundPurchased() {
+  try {
+    const { error } = await supabase
+      .from('users')
+      .update({ backgroundPurchased: true }) // Устанавливаем статус покупки фона
+      .eq('telegram', MY_ID);
+
+    if (error) {
+      console.error('Ошибка при обновлении фона:', error.message);
+    } else {
+      console.log('Фон успешно куплен!');
+    }
+  } catch (error) {
+    console.error('Неизвестная ошибка при обновлении фона:', error);
+  }
+}
+
+// Получить статус купленного фона
+export async function getPurchasedBackground() {
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('backgroundPurchased')
+      .eq('telegram', MY_ID)
+      .single();
+
+    if (error) {
+      console.error('Ошибка при получении фона:', error.message);
+      return false; // Если ошибка, фон считается не купленным
+    }
+
+    return data.backgroundPurchased; // Возвращаем статус фона
+  } catch (error) {
+    console.error('Неизвестная ошибка при получении фона:', error);
+    return false; // Если ошибка, фон считается не купленным
   }
 }

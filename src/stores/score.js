@@ -1,11 +1,10 @@
 import { defineStore } from 'pinia'
 import debounce from 'lodash.debounce'
-import { updateScore } from '@/api/app'
+import { updateScore } from '@/api/app' // Make sure this method sends the score to the backend
 
 const debouncedUpdateScore = debounce(updateScore, 500)
 
 const baseLevelScore = 25
-
 // [25, 50, 100]
 const levels = new Array(15)
   .fill(0)
@@ -36,10 +35,11 @@ function computeLevelByScore(score) {
 export const useScoreStore = defineStore('score', {
   state: () => ({
     score: 0,
-    previousLevel: 0, // Добавим состояние для предыдущего уровня
-    clicks: 1000, // Начальное количество кликов
-    maxClicks: 1000, // Лимит кликов
-    regenInterval: null, // Ссылка на интервал
+    previousLevel: 0,
+    clicks: 1000,
+    maxClicks: 1000,
+    regenInterval: null,
+    background: null,
   }),
   getters: {
     level: (state) => computeLevelByScore(state.score),
@@ -58,41 +58,49 @@ export const useScoreStore = defineStore('score', {
       if (this.canClick) {
         this.score += score
         this.clicks -= 1
-        this.checkLevelChange()  // Проверка на изменение уровня
-        debouncedUpdateScore(this.score)
+        this.checkLevelChange()
+        debouncedUpdateScore(this.score) // Debounced update
       }
     },
     setScore(score) {
       this.score = score
-      this.checkLevelChange()  // Проверка на изменение уровня после установки счета
+      this.checkLevelChange()
+      debouncedUpdateScore(this.score) // Send to backend when score is set
+    },
+    setBackground(background) {
+      this.background = background
+    },
+    async updateScoreInDatabase() {
+      // This method will update the score in the backend
+      try {
+        await updateScore(this.score)  // Assuming updateScore sends the score to your API
+        console.log('Score updated in the database')
+      } catch (error) {
+        console.error('Failed to update score:', error)
+      }
     },
     checkLevelChange() {
       const currentLevel = this.level.level
       if (currentLevel !== this.previousLevel) {
         this.previousLevel = currentLevel
-        // Дополнительные действия при изменении уровня, например, отправка данных на сервер или обновление UI
         console.log(`Level changed to: ${currentLevel}`)
       }
     },
     startClickRegen() {
-      // Если уже существует интервал, очистить его
       if (this.regenInterval) {
         clearInterval(this.regenInterval)
       }
       
-      // Каждый 30 секунд прибавляем 1 клик
       this.regenInterval = setInterval(() => {
         if (this.clicks < this.maxClicks) {
           this.clicks += 1
         }
-      }, 1000) // 30 секунд
+      }, 1000)
     },
     init() {
       this.startClickRegen()
-      this.checkLevelChange() // Вызов checkLevelChange в правильном контексте
+      this.checkLevelChange()
     }
   },
-  // Вызываем startClickRegen сразу при инициализации store
-  // Чтобы начать восстановление кликов
-  persist: true,  // Если вы хотите сохранять состояние между перезагрузками
+  persist: true,
 })

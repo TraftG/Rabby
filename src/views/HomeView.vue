@@ -31,13 +31,11 @@ import lizard from '@/assets/frog.jpg'
 import { TonConnectButton } from 'ton-ui-vue'
 import mixpanel from 'mixpanel-browser'
 
-// Инициализация Mixpanel
+// Initializing Mixpanel
 mixpanel.init('dd53dc09474c6337c7e7826186e2cc14')
 
-// Уникальный ID пользователя (можно заменить на ID из системы)
 const userId = 'user_' + Math.random().toString(36).substring(2, 15)
 
-// Установить данные о пользователе при загрузке компонента
 onMounted(() => {
   mixpanel.identify(userId)
   mixpanel.people.set({
@@ -45,48 +43,47 @@ onMounted(() => {
     $created: new Date().toISOString(),
     app: 'My Vue Game',
   })
-  fetchUserSkin() // Загрузка скина при монтировании
+  fetchUserSkin() 
 })
 
-// Локальные переменные
+// Local variables
 const img = ref(null)
 const store = useScoreStore()
 
-// Список доступных скинов
+// Available skins
 const skins = ref([
-  { id: 'default', image: frog, owned: true }, // Скин по умолчанию
-  { id: 'lizard', image: lizard, owned: false }, // Дополнительный скин
+  { id: 'default', image: frog, owned: true }, 
+  { id: 'lizard', image: lizard, owned: false }, 
 ])
 
-// Текущий выбранный скин
+// Current selected skin
 const currentSkin = computed(() => {
   const ownedSkin = skins.value.find(skin => skin.owned)
   return ownedSkin ? ownedSkin.image : frog
 })
 
-// Имитация API запроса для получения скина
 async function fetchUserSkin() {
   try {
-    const response = await fetch('/api/user-skin') // Заглушка
+    const response = await fetch('/api/user-skin') 
     const { skinId } = await response.json()
     const userSkin = skins.value.find(skin => skin.id === skinId)
     if (userSkin) userSkin.owned = true
   } catch (error) {
-    console.error('Ошибка загрузки скина:', error)
+    console.error('Error fetching skin:', error)
   }
 }
 
-// Увеличение очков
+// Increment function when clicking the circle
 function increment(event) {
   store.add(1)
 
-  // Отправка события в Mixpanel при увеличении очков
+  // Track the score increment in Mixpanel
   mixpanel.track('Score Incremented', {
     score: store.score,
     userId: userId,
   })
 
-  // Анимация клика
+  // Apply tilt effect based on click position
   const rect = event.target.getBoundingClientRect()
   const offsetX = event.clientX - rect.left - rect.width / 2
   const offsetY = event.clientY - rect.top - rect.height / 2
@@ -103,7 +100,7 @@ function increment(event) {
     img.value.style.setProperty('--tiltY', `0deg`)
   }, 300)
 
-  // Всплывающий текст "+1"
+  // Show "+1" animation on click
   const plusOne = document.createElement('div')
   plusOne.classList.add('plus-one')
   plusOne.textContent = '+1'

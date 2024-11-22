@@ -27,7 +27,7 @@ const { user } = useTelegram()
 
 const referalText = ref('Your referral link')
 
-// Преобразуем друзей в массив [{ id: 42, name: 'Vladilen' }]
+// Преобразуем друзей в массив [{ id: 42, nae: 'Vladilen' }]
 const friends = computed(() =>
   Object.keys(app.user?.friends ?? {}).map((id) => ({
     id,
